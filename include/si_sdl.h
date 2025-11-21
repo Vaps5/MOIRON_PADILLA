@@ -1,1 +1,31 @@
-//si_sdl.h
+#define SI_SDL_H
+#ifndef SI_SDL_H
+
+
+void si_display_sprite(Game *g, char *sprite, int w, int x, int y);
+
+/* tank */
+
+void si_tank_display(Game *g, int x, int y);
+void si_tank_explode_display(Game *g, int type, int x, int y);
+void si_tank_shoot_display(Game *g, int x, int y);
+void si_tank_set_position(Game *g);
+
+/* ufo */
+
+void si_ufo_display(Game *g, int x, int y);
+
+/* invader */
+
+void si_invader_display(Game *g, int type, int model, int x, int y);
+void si_invader_explode_display(Game *g, int x, int y);
+void si_invader_shoot_display(Game *g, int x, int y);
+void si_invaders_display(Game *g, int x, int y);
+
+/* alphanum */
+
+void si_alphanum_display(Game *g, char c, int x, int y);
+void si_str_display(Game *g, const char *str, int x, int y);
+void si_text_display(Game *g, const char *str, int l, int c);
+
+#endif
