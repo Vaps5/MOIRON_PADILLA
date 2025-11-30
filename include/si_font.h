@@ -1,14 +1,18 @@
 #ifndef SI_FONT_H
 #define SI_FONT_H
 
+
+#include "si.h"
+
+
 /* UNIQUEMENT POUR LES TESTS, A MODIFIER QUAND ON CHANGE LE MAIN */
 
 void pixel_update();
 
 
-
-
-/* renvoie le sprite du caractère 'c', ainsi que sa largeur dans width */
+/* renvoie le sprite du caractère 'c', ainsi que sa largeur dans width 
+Returns pointer to character ASCII with width
+*/
 
 char *si_font_alphanum_get(char c, int *width);
 
@@ -30,9 +34,9 @@ char *si_font_ufo_get(int *width);
 
 /* renvoie le sprite de l’ennemi de type 't' et du modèle (pour
  l’animation), ainsi que sa largeur dans width */
-/*
+
 char *si_font_invader_get(Si_Type t, int model, int *width);
-*/
+
 /* renvoie le sprite de l’explosion d’un ennemi, ainsi que sa largeur dans width */
 
 char *si_font_invader_explode_get(int *width);

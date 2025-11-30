@@ -640,3 +640,64 @@ char *si_font_alphanum_get(char c, int *width)
     }
   return (char *)si_font_alphanum[36]; /* s'il sait pas, il renvoie un espace */
 }
+
+
+char *si_font_tank_get(int *width)
+{
+  *width = 13;   
+  return (char *)si_font_tank;
+}
+
+char *si_font_tank_explode_get(int type, int *width)
+{
+  /* Error case, type out of range */
+  if (type < 0 || type > 1)
+    type = 0;
+
+  *width = 16;   
+  return (char *)si_font_tank_explode[type];
+}
+
+char *si_font_tank_shoot_get(int *width)
+{
+  *width = 1;    
+  return (char *)si_font_tank_shoot;
+}
+
+char *si_font_ufo_get(int *width)
+{
+  *width = 16;   
+  return (char *)si_font_ufo;
+}
+
+char *si_font_invader_get(Si_Type t, int model, int *width)
+{
+  /* t = SI_TYPE_SQUID(1), SI_TYPE_CRAB(2), SI_TYPE_OCTOPUS(3) */
+  /*Access in memory*/
+  int type_index = (int)t - 1;   /* 0,1,2 */
+
+  /* Error case, type or model out of range */
+
+  if (type_index < 0 || type_index > 2)
+    type_index = 0;
+
+  if (model < 0 || model > 1)
+    model = 0;   
+
+
+  /*All enemies 12 columns*/
+  *width = 12;
+  return (char *)si_font_invaders[type_index][model];
+}
+
+char *si_font_invader_explode_get(int *width)
+{
+  *width = 13; 
+  return (char *)si_font_invader_explode;
+}
+
+char *si_font_invader_shoot_get(int *width)
+{
+  *width = 5;
+  return (char *)si_font_invader_shoot;
+}

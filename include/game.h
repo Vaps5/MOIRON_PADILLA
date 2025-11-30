@@ -1,6 +1,9 @@
-#define GAME_H
-#ifndef GAME_H
 
+#ifndef GAME_H
+#define GAME_H
+
+#include <SDL.h>
+#include "si.h"    
 
 typedef struct
 {
