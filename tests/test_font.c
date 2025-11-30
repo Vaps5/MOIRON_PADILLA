@@ -1,4 +1,4 @@
-/* Test HELLO WORLD using your si_sdl.c functions
+/* Test HELLO WORLD using si_sdl.c functions
 To compile
 
 gcc -g -O2 -Wall -Wextra -I./include \
