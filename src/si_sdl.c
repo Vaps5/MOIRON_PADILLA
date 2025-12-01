@@ -158,11 +158,11 @@ void si_invaders_display(Game *g, int x, int y)
 {
     int pixel = g->pixel_size;
 
-    /* Tamaño de un invader en “real pixels” */
+    /* Size invader in real pixels */
     int invader_w_px = 12 * pixel;  
     int invader_h_px = 8  * pixel;  /* 8 rows */
 
-    /* Espacio entre invaders */
+    /* Space between invaders */
     int spacing_x = invader_w_px + 2 * pixel;
     int spacing_y = invader_h_px + 2 * pixel;
 
@@ -177,7 +177,7 @@ void si_invaders_display(Game *g, int x, int y)
             else
                 t = SI_TYPE_OCTOPUS;   
 
-            int model = 0;  /* frame 0 */
+            int model = 0;
 
             int ix = x + col * spacing_x;
             int iy = y + row * spacing_y;
