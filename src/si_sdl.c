@@ -107,12 +107,8 @@ void si_tank_set_position(Game *g)
 
     int x = (g->window_width - sprite_w_px) / 2;
     int y = g->window_height - 3 * g->pixel_size * 8;
-    /* 3 “filas” de margen desde abajo. Ajustable. */
 
     g->si->tank.x = x;
-    /* En tu struct Tank no hay y, así que el Y será constante en game.c */
-    /* Más adelante, si añadís un campo y en Tank, aquí también lo pones. */
-}
 
 
 
@@ -162,27 +158,26 @@ void si_invaders_display(Game *g, int x, int y)
 {
     int pixel = g->pixel_size;
 
-    /* Tamaño de un invader en “pixels reales” */
-    int invader_w_px = 12 * pixel;  /* 12 columnas en los sprites */
-    int invader_h_px = 8  * pixel;  /* 8 filas */
+    /* Tamaño de un invader en “real pixels” */
+    int invader_w_px = 12 * pixel;  
+    int invader_h_px = 8  * pixel;  /* 8 rows */
 
-    /* Espaciado entre invaders */
+    /* Espacio entre invaders */
     int spacing_x = invader_w_px + 2 * pixel;
     int spacing_y = invader_h_px + 2 * pixel;
 
     for (int row = 0; row < SI_INVADERS_ROWS; ++row) {
         for (int col = 0; col < SI_INVADERS_COLS; ++col) {
 
-            /* Tipo según la fila (como en Space Invaders clásico) */
             Si_Type t;
             if (row == 0)
-                t = SI_TYPE_SQUID;      /* fila superior */
+                t = SI_TYPE_SQUID;     
             else if (row <= 2)
-                t = SI_TYPE_CRAB;       /* 2 filas centrales */
+                t = SI_TYPE_CRAB;      
             else
-                t = SI_TYPE_OCTOPUS;    /* 2 filas inferiores */
+                t = SI_TYPE_OCTOPUS;   
 
-            int model = 0;  /* frame 0 de animación. Luego usarás 0/1 */
+            int model = 0;  /* frame 0 */
 
             int ix = x + col * spacing_x;
             int iy = y + row * spacing_y;

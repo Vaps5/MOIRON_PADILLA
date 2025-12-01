@@ -22,11 +22,11 @@ int main(int argc, char *argv[])
     /* Initialize SDL */
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        SDL_Log("SDL_Init error: %s\n", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "error : %s\n", SDL_GetError());
         goto err;
     }
 
-    /*Create Game instance */
+    /*Create Game instance -- Create window*/
     Game g;
     g.window_width  = 800;
     g.window_height = 600;
@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
     g.play_game     = 1;
     g.si            = NULL;
 
-    /*Create window */
     g.win = SDL_CreateWindow(
         "Test Font", // Window Title
         60, 60,
@@ -45,7 +44,7 @@ int main(int argc, char *argv[])
 
     if (g.win == NULL)
     {
-        SDL_Log("SDL_CreateWindow error: %s\n", SDL_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"error : %s\n", SDL_GetError());
         goto sdl_quit;
     }
 
