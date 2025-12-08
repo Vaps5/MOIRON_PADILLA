@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "../include/si_menu.h"
-#include "si_sdl.h"
-#include "si_sdl.c"
+#include "../include/si_sdl.h"
+
+// A MODIF QUAND GAME.C SERA FINI
 
 void menu(Game *g)
 {
@@ -16,6 +17,6 @@ void menu(Game *g)
 void game_over(Game *g)
 {
   si_text_display(g, "SCORE<1> HI-SCORE SCORE<2>", 1, 1);
-  si_text_display(g, "0000     0000     0000", 3, 3);
-  si_text_display(g, "GAME OVER", 14, 8); // à modifier apres les tests
+  si_text_display(g, "0000    0000    0000", 3, 3);
+  si_text_display(g, "GAME OVER", 14, 8); // à modifier après les tests
 }

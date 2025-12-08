@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "si_font.h"
+#include "../include/si_font.h"
 
 /* caractères (A-Z, 0-9, des symboles)*/
 

@@ -68,17 +68,20 @@ char *si_get_matrix(void)
 }
 
 /* renvoie le nombre d’ennemis restant dans la matrice */
-int si_matrix_count(void) {
+int si_matrix_count(void)
+{
   int count = 0;
-  for (int i = 0; i < 5; i++) {
-      for (int j = 0; j < 11; j++) {
-          if (matrice[i][j] != 0) {
+  for(int i = 0; i < 5; i++)
+    {
+      for(int j = 0; j < 11; j++)
+	{
+          if(matrice[i][j] != 0)
+	    {
               count++;
-          }
-      }
-  }
+            }
+        }
+    }
   return count;
-}
 }
 
 /* renvoie le nombre de points en fonction de l’ennemi */
@@ -166,13 +169,13 @@ int si_tank_is_hit(Si *si)
 
 void si_invaders_get_column(Si *si)
 {
-  int column = (rand() % 11);     // Renvoie une colonne aléatoire entre 0 et 10
+  int col = (rand() % 11);     // Renvoie une colonne aléatoire entre 0 et 10
                                   // On cherche l'ennemi vivant le plus bas dans la colonne
-  for (int l = 4; l >= 0; l--) {  // On part du bas de la matrice (ligne 4) vers le haut
-      if (matrice[l][column] != 0)
+  for (int ligne = 4; ligne >= 0; ligne--) {  // On part du bas de la matrice (ligne 4) vers le haut
+      if (matrice[ligne][col] != 0)
 	{                                  // On calcule les coordonnées de la bombe à partir de l'ennemi vivant :
 	  int largeur_ennemi = 12;         // Chaque ennemi est une matrice 12x8
-          si->invaders.bomb_x = si->invaders.x + (colonne * largeur_ennemi) + (largeur_ennemi / 2) - 2; // -2 pour centrer le sprite de bombe 
+          si->invaders.bomb_x = si->invaders.x + (col * largeur_ennemi) + (largeur_ennemi / 2) - 2; // -2 pour centrer le sprite de bombe 
           int hauteur_ennemi = 8;
           si->invaders.bomb_y = si->invaders.y + (ligne * hauteur_ennemi) + hauteur_ennemi;
             

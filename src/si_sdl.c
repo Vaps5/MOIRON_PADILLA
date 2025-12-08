@@ -1,4 +1,3 @@
-// si_sdl.c
 #include <SDL.h>
 #include "../include/si_sdl.h"
 #include "../include/si_font.h"
@@ -96,28 +95,31 @@ void si_tank_shoot_display(Game *g, int x, int y)
     si_display_sprite(g, sprite, width, x, y);
 }
 
+// si_tank_set_position à finir
+
 void si_tank_set_position(Game *g)
 {
-    if (!g || !g->si) return;
+  if(!g || !g->si) return;
 
-    int width;
-    (void)si_font_tank_get(&width);   /* solo queremos el ancho lógico */
+  int width;
+  (void)si_font_tank_get(&width);   /* solo queremos el ancho lógico */  
 
-    int sprite_w_px = width * g->pixel_size;
-
-    int x = (g->window_width - sprite_w_px) / 2;
-    int y = g->window_height - 3 * g->pixel_size * 8;
-
-    g->si->tank.x = x;
-
+  int sprite_w_px = width * g->pixel_size;
+  
+  int x = (g->window_width - sprite_w_px) / 2;
+  int y = g->window_height - 3 * g->pixel_size * 8;
+    
+  g->si->tank.x = x;
+}
 
 
 /** invader **/
 
-void si_invader_display(Game *g, int type, int model, int x, int y) {
-    int width;
-    char *sprite = si_font_invader_get(type, model, &width);
-    si_display_sprite(g, sprite, width, x, y);
+void si_invader_display(Game *g, int type, int model, int x, int y)
+{
+  int width;
+  char *sprite = si_font_invader_get(type, model, &width);
+  si_display_sprite(g, sprite, width, x, y);
 }
 
 

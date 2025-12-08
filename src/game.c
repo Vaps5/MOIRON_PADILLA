@@ -1,4 +1,7 @@
 //game.c
+
+#include "../include/game.h"
+
 static void game_update(Game *g)
 {
     SDL_SetRenderDrawColor(g->ren, 0x2b, 0x2a, 0x33, 0xff);
@@ -80,10 +83,9 @@ void game_run(Game *g)
 	      }
 	    case SDL_MOUSEMOTION:
 	      {
-		/*
-		 * TODO: souris déplacée, on sauvegarde la nouvelle
-		 * coordonnée x du tank et on met à jour le contenu.
-		 */
+		/*sauvegarde de la nouvelle coordonnée x du tank puis mise à jour */
+		int new_x = event.motion.x;
+		g->si->tank.x = new_x;
 		break;
 	      }
 	    }
@@ -133,7 +135,7 @@ void game_run(Game *g)
 	      /* si le tank tire ... */
 	      if (g->si->tank.firing)
 		{
-		  if (si_tank_shoot_can_move_move_up(g->si))
+		  if (si_tank_shoot_can_move_up(g->si))
 		    {
 		      g->update = 1;
 		    }

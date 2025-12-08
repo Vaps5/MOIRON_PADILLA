@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <SDL.h>
-#include "si_font.h"
+#include "../include/si_font.h"
 
 static SDL_Window *win = NULL;
 static SDL_Renderer *renderer = NULL;
