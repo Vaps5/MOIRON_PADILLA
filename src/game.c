@@ -1,12 +1,24 @@
-//game.c
-
 #include "../include/game.h"
 
 static void game_update(Game *g)
 {
     SDL_SetRenderDrawColor(g->ren, 0x2b, 0x2a, 0x33, 0xff);
     SDL_RenderClear(g->ren);
-    /* TODO : afficher la bannière (la première ligne et les scores) */
+
+    // F4
+    
+    // Affichage du numéro de vague
+    
+    char wave[15];
+    snprintf(wave, sizeof(wave), "WAVE: %d", g->current_wave);
+    si_text_display(g, wave, 1, 10); // à changer si besoin (voir apres les tests)
+    
+    // Affichage du meilleur score
+    
+    char high_score[50];
+    snprintf(high_score, sizeof(high_score), "HIGH: %d", g->si->score_highest);
+    si_text_display(g, high_score, 1, 18); // à changer si besoin (voir apres les tests)
+    
     if (!g->play_game)
     {
         menu(g);
@@ -22,7 +34,13 @@ static void game_update(Game *g)
         /* TODO : afficher le tank */
         /* TODO : si le tank tire, afficher le tir */
     }
-    /* TODO : afficher la dernière ligne : le nombre de vies restant */
+    
+    // Affichage nombre de vies restantes
+    
+    char lives[20];
+    snprintf(lives, sizeof(lives), "LIVES: %d", g->si->life_1);
+    si_text_display(g, lives, 28, 0);
+
     SDL_RenderPresent(g->ren);
 
     /* fin de la mise à jour */
@@ -31,7 +49,12 @@ static void game_update(Game *g)
 
 Game *game_new(int x, int y)
 {
-    /* TODO : définir tous les membres */
+  /* TODO : définir tous les membres */
+  
+  // F4
+  g->current_wave = 1;
+  g->invaders_speed = 0.1;  // Vitesse initiale
+  g->shoot_speed = 0.005;   // Vitesse initiale des tirs
 }
 
 void game_del(Game *g)

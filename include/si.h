@@ -1,4 +1,3 @@
-
 #ifndef SI_H
 #define SI_H
 
@@ -112,6 +111,10 @@ int si_invaders_can_move_right(Si *si);
 */
 int si_invader_is_hit(Si *si);
 
+// Servent à gérer les vagues (reset les ennemis, les rends plus rapides)
 
+void si_reset_matrix(Si *si);
+
+void si_new_wave(Si *si, float *enemy_speed, float *shoot_speed);
 
 #endif

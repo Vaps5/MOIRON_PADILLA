@@ -312,6 +312,7 @@ void si_reset_matrix(Si *si)
 }
 
 
+
 void si_new_wave(Si *si, float *enemy_speed, float *shoot_speed)
 {
     si_reset_matrix(si);

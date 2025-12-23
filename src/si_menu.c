@@ -16,7 +16,24 @@ void menu(Game *g)
 
 void game_over(Game *g)
 {
-  si_text_display(g, "SCORE<1> HI-SCORE SCORE<2>", 1, 1);
-  si_text_display(g, "0000    0000    0000", 3, 3);
-  si_text_display(g, "GAME OVER", 14, 8); // à modifier après les tests
+    si_text_display(g, "GAME OVER", 15, 8);
+    
+    // Affichage du score final
+    
+    char final_score[50];
+    snprintf(final_score, sizeof(final_score), "FINAL SCORE: %d", g->si->score_1);
+    si_text_display(g, final_score, 17, 6);
+    
+    // Affichage du meilleur score
+    
+    char best_score[50];
+    snprintf(best_score, sizeof(best_score), "BEST SCORE: %d", g->si->score_highest);
+    si_text_display(g, best_score, 18, 7);
+    
+    // Mise à jour du high score (si besoin)
+    
+    if(g->si->score_1  >  g->si->score_highest)
+      {
+        g->si->score_highest = g->si->score_1;
+      }
 }
