@@ -23,12 +23,18 @@ typedef struct
   
   char update;
 
+  /*
   // F4
 
   int num_wave;       // numéro de la vague actuelle
   double enemy_speed; // vitesse des invaders
   double shot_speed;  // vitesse des tirs ennemis
+  */
   
 } Game;
+
+Game *game_new(void);
+void game_run(Game *g);
+void game_del(Game *g);
 
 #endif

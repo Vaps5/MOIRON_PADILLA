@@ -95,20 +95,18 @@ void si_tank_shoot_display(Game *g, int x, int y)
     si_display_sprite(g, sprite, width, x, y);
 }
 
-// si_tank_set_position à finir
+// si_tank_set_position 
 
 void si_tank_set_position(Game *g)
 {
-  if(!g || !g->si) return;
+  if (!g || !g->si) return;
 
   int width;
-  (void)si_font_tank_get(&width);   /* solo queremos el ancho lógico */  
+  (void)si_font_tank_get(&width); 
 
   int sprite_w_px = width * g->pixel_size;
-  
   int x = (g->window_width - sprite_w_px) / 2;
-  int y = g->window_height - 3 * g->pixel_size * 8;
-    
+
   g->si->tank.x = x;
 }
 

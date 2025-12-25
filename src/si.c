@@ -139,6 +139,11 @@ int si_tank_is_hit(Si *si)
     Tank *t = &si->tank;
     Invaders *inv = &si->invaders;
 
+    /* no bomb */
+    if (!inv->firing) return 0;
+    /* already destroyed */     
+    if (t->destroyed) return 0;     
+
     int pixel = si->pixel_size;
 
     /* Tank position on screen (Y is fixed near the bottom) */

@@ -1,196 +1,335 @@
+/*
+To compile
+
+gcc -g -O2 -Wall -Wextra -o si src/*.c $(pkg-config --cflags --libs sdl2)
+./si
+*/
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
 #include "../include/game.h"
+#include "../include/si_sdl.h"
+#include "../include/si_menu.h"
+#include "../include/si.h"
+
+#define CHAR_W_UNITS 6
+#define CHAR_H_UNITS 9
+#define NB_COLS 26
+#define NB_LINES 30
+
+#define TANK_W_PIXELS 13
+#define TANK_H_PIXELS 8
+
+
+static int tank_y_px(const Game *g)
+{
+  return (NB_LINES - 1) * CHAR_H_UNITS * g->pixel_size;
+}
+
+static int clamp_tank_x(const Game *g, int x)
+{
+  int tank_w = TANK_W_PIXELS * g->pixel_size;
+  if (x < 0) return 0;
+  if (x > g->window_width - tank_w) return g->window_width - tank_w;
+  return x;
+}
+
+static void tank_try_fire(Game *g)
+{
+  Tank *t = &g->si->tank;
+  if (t->destroyed) return;
+  if (t->firing) return;
+
+  int px = g->pixel_size;
+  int tank_w = TANK_W_PIXELS * px;
+
+  t->firing  = 1;
+  t->shoot_x = t->x + tank_w / 2;
+  t->shoot_y = tank_y_px(g) - TANK_H_PIXELS * px;
+}
+
+static void matrix_reset(void)
+{
+  char *m = si_get_matrix();
+  for (int i = 0; i < 5; ++i) {
+    for (int j = 0; j < 11; ++j) {
+      if (i == 0) m[i * 11 + j] = 1;
+      else if (i == 1 || i == 2) m[i * 11 + j] = 2;
+      else m[i * 11 + j] = 3;
+    }
+  }
+}
+
+
+/* F4
+  
+  // Affichage du numéro de vague
+  
+  char wave[15];
+  snprintf(wave, sizeof(wave), "WAVE: %d", g->current_wave);
+  si_text_display(g, wave, 1, 10); // à changer si besoin (voir apres les tests)
+  
+  // Affichage du meilleur score
+  
+  char high_score[50];
+  snprintf(high_score, sizeof(high_score), "HIGH: %d", g->si->score_highest);
+  si_text_display(g, high_score, 1, 18); // à changer si besoin (voir apres les tests)
+  */
 
 static void game_update(Game *g)
 {
-    SDL_SetRenderDrawColor(g->ren, 0x2b, 0x2a, 0x33, 0xff);
-    SDL_RenderClear(g->ren);
+  SDL_SetRenderDrawColor(g->ren, 0x2b, 0x2a, 0x33, 0xff);
+  SDL_RenderClear(g->ren);
 
-    // F4
-    
-    // Affichage du numéro de vague
-    
-    char wave[15];
-    snprintf(wave, sizeof(wave), "WAVE: %d", g->current_wave);
-    si_text_display(g, wave, 1, 10); // à changer si besoin (voir apres les tests)
-    
-    // Affichage du meilleur score
-    
-    char high_score[50];
-    snprintf(high_score, sizeof(high_score), "HIGH: %d", g->si->score_highest);
-    si_text_display(g, high_score, 1, 18); // à changer si besoin (voir apres les tests)
-    
-    if (!g->play_game)
-    {
-        menu(g);
-    }
-    else if (g->si->life_1 == 0)
-    {
-        game_over(g);
-    }
-    else
-    {
-        /* TODO : afficher les ennemis */
-        /* TODO : si les ennemis tirent, afficher le tir */
-        /* TODO : afficher le tank */
-        /* TODO : si le tank tire, afficher le tir */
-    }
-    
-    // Affichage nombre de vies restantes
-    
-    char lives[20];
-    snprintf(lives, sizeof(lives), "LIVES: %d", g->si->life_1);
-    si_text_display(g, lives, 28, 0);
+  if (!g->play_game) {
+    menu(g);
+  } else if (g->si->life_1 == 0) {
+    game_over(g);
+  } else {
+    si_text_display(g, "SCORE<1> HI-SCORE SCORE<2>", 0, 0);
 
-    SDL_RenderPresent(g->ren);
+    char s1[16], sh[16], s2[16];
+    snprintf(s1, sizeof(s1), "%04d", g->si->score_1);
+    snprintf(sh, sizeof(sh), "%04d", g->si->score_highest);
+    snprintf(s2, sizeof(s2), "%04d", g->si->score_2);
 
-    /* fin de la mise à jour */
-    g->update = 0;
+    si_text_display(g, s1, 1, 1);
+    si_text_display(g, sh, 1, 11);
+    si_text_display(g, s2, 1, 21);
+
+    si_invaders_display(g, g->si->invaders.x, g->si->invaders.y);
+
+    if (g->si->invaders.firing) {
+      si_invader_shoot_display(g, g->si->invaders.bomb_x, g->si->invaders.bomb_y);
+    }
+
+    int ty = tank_y_px(g);
+    if (g->si->tank.destroyed) {
+      int type = (g->si->tank.destroyed_count / 6) % 2;
+      si_tank_explode_display(g, type, g->si->tank.x, ty);
+    } else {
+      si_tank_display(g, g->si->tank.x, ty);
+    }
+
+    if (g->si->tank.firing) {
+      si_tank_shoot_display(g, g->si->tank.shoot_x, g->si->tank.shoot_y);
+    }
+
+    char lives[32];
+    snprintf(lives, sizeof(lives), "LIVES %d", g->si->life_1);
+    si_text_display(g, lives, NB_LINES - 1, 0);
+  }
+
+  SDL_RenderPresent(g->ren);
+  g->update = 0;
 }
 
-Game *game_new(int x, int y)
+
+
+Game *game_new(void)
 {
-  /* TODO : définir tous les membres */
-  
-  // F4
-  g->current_wave = 1;
-  g->invaders_speed = 0.1;  // Vitesse initiale
-  g->shoot_speed = 0.005;   // Vitesse initiale des tirs
+  Game *g = malloc(sizeof(*g));
+  if (!g) return NULL;
+
+  g->win = NULL;
+  g->ren = NULL;
+  g->si  = NULL;
+
+  g->pixel_size = 2;
+
+  g->window_width  = NB_COLS  * CHAR_W_UNITS * g->pixel_size;
+  g->window_height = NB_LINES * CHAR_H_UNITS * g->pixel_size;
+
+  g->play_game = 0;
+  g->update = 1;
+
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    free(g);
+    return NULL;
+  }
+
+  g->win = SDL_CreateWindow(
+      "Space Invaders",
+      SDL_WINDOWPOS_CENTERED, 0,
+      g->window_width, g->window_height,
+      SDL_WINDOW_BORDERLESS
+  );
+  if (!g->win) {
+    SDL_Quit();
+    free(g);
+    return NULL;
+  }
+
+  g->ren = SDL_CreateRenderer(g->win, -1, SDL_RENDERER_ACCELERATED);
+  if (!g->ren) {
+    SDL_DestroyWindow(g->win);
+    SDL_Quit();
+    free(g);
+    return NULL;
+  }
+
+  g->si = si_new(g->window_width, g->window_height, g->pixel_size);
+  if (!g->si) {
+    SDL_DestroyRenderer(g->ren);
+    SDL_DestroyWindow(g->win);
+    SDL_Quit();
+    free(g);
+    return NULL;
+  }
+
+  si_tank_set_position(g);
+
+  g->si->invaders.x = 0;
+  g->si->invaders.y = 2 * CHAR_H_UNITS * g->pixel_size;
+  g->si->invaders.direction = 1;
+  g->si->invaders.firing = 0;
+
+  g->freq = SDL_GetPerformanceFrequency();
+  g->count_invaders = SDL_GetPerformanceCounter();
+  g->count_shoot    = SDL_GetPerformanceCounter();
+
+  srand((unsigned)time(NULL));
+
+  return g;
 }
 
 void game_del(Game *g)
 {
-    /* TODO : a faire */
+  if (!g) return;
+
+  if (g->si) si_del(g->si);
+
+  if (g->ren) SDL_DestroyRenderer(g->ren);
+  if (g->win) SDL_DestroyWindow(g->win);
+
+  SDL_Quit();
+  free(g);
 }
 
 void game_run(Game *g)
 {
-  int running;
-  running 1;
-  while (running)
-    {
-      SDL_Events events;
-      Uint64 c_shoot;
-      Uint64 c_invaders;
+  int running = 1;
+  float inv_period = 0.1f;
+  float shoot_period = 0.005f;
 
-      while (SDL_PollEvent(&events))
-	{
-	  switch (events.type)
-	    {
-	    case SDL_QUIT:
-	      {
-		running = 0;
-		break;
-	      }
-	    case SDL_KEYDOWN:
-	      {
-		switch (events.key.keysym.sym)
-		  {
-		  case SDLK_q:
-		    {
-		      running = 0;
-		      break;
-		    }
-		  case SDLK_ESCAPE:
-		    {
-		      running = 0;
-		      break;
-		    }
-		    /* TODO : gérer la touche Espace
-		     * si ’play_game’ est vrai, on
-		     * met à jour les coordonnées du tir
-		     * sinon on met play_game à vrai et on
-		     * met à jour
-		     */
-		  }
-		break;
-	      }
-	    case SDL_MOUSEMOTION:
-	      {
-		/*sauvegarde de la nouvelle coordonnée x du tank puis mise à jour */
-		int new_x = event.motion.x;
-		g->si->tank.x = new_x;
-		break;
-	      }
-	    }
-	}
-      if (g->play_game == 0)
-	{
-	  g->update = 1;
-	}
-      else
-	{
-	  c_invaders = SDL_GetPerformanceCounter();
-	  c_shoot = SDL_GetPerformanceCounter();
+  while (running) {
+    SDL_Event events;
+    Uint64 c_shoot;
+    Uint64 c_invaders;
 
-	  /* animation lente pour les ennemis */
-	  if ((float)(c_invaders - g->count_invaders) / g->freq > 0.1)
-	    {
-	      if (g->si->tank.destroyed)
-		{
-		  /*
-		   * TODO: faire l’animation de l’explosion
-		   * puis remettre à jour la position, le fait
-		   * d’être d\’etruit, etc...
-		   */
-		}
-	      else
-		{
-		  if (g->si->invades.direction == 1)
-		    {
-		      if (si_invaders_can_move_right(g->si))
-			{
-			  g->update = 1;
-			}
-		    }
-		  else
-		    {
-		      if (si_invaders_can_move_left(g->si))
-			{
-			  g->update = 1;
-			}
-		    }
-		}
-	      g->count_invaders = c_invaders;
-	    }
-	  /* animation rapide pour les 2 tirs */
-	  if ((float)(c_shoot - g->count_shoot) / g->freq > 0.005)
-	    {
-	      /* si le tank tire ... */
-	      if (g->si->tank.firing)
-		{
-		  if (si_tank_shoot_can_move_up(g->si))
-		    {
-		      g->update = 1;
-		    }
-		}
-	      /* si les ennemis ne tire pas ... */
-	      if (!g->si->invaders.firing)
-		{
-		  /* on trouve une colonne aléatoirement */
-		  si_invaders_get_column(g->si);
+    while (SDL_PollEvent(&events)) {
+      switch (events.type) {
 
-		  /* et on dit que les ennemi ont tiré */
-		  g->si->invaders.firing = 1;
-		}
-	      /* si les ennemis ont tirés */
-	      if (g->si->invaders.firing)
-		{
-		  /*
-		   * si la bombe peut descendre, on la déplace et
-		   * on met à jour
-		   */
-		  if (si_invaders_bomb_can_move_down(g->si))
-		    {
-		      g->update = 1;
-		    }
-		}
-	      g->count_shoot = c_shoot;
-	    }
-	}
-      if (g->update)
-	game_update(g);
+      case SDL_QUIT:
+        running = 0;
+        break;
+
+      case SDL_KEYDOWN:
+        switch (events.key.keysym.sym) {
+        case SDLK_q:
+        case SDLK_ESCAPE:
+          running = 0;
+          break;
+
+        case SDLK_SPACE:
+          if (g->play_game) {
+            tank_try_fire(g);
+            g->update = 1;
+          } else {
+            g->play_game = 1;
+            g->update = 1;
+          }
+          break;
+
+        default:
+          if (g->si->life_1 == 0) running = 0;
+          break;
+        }
+        break;
+
+      case SDL_MOUSEMOTION:
+        if (g->play_game) {
+          g->si->tank.x = clamp_tank_x(g, events.motion.x);
+          g->update = 1;
+        }
+        break;
+
+      default:
+        break;
+      }
     }
+
+    if (g->play_game == 0) {
+      g->update = 1;
+    } else {
+      c_invaders = SDL_GetPerformanceCounter();
+      c_shoot    = SDL_GetPerformanceCounter();
+
+      if ((float)(c_invaders - g->count_invaders) / g->freq > inv_period) {
+        if (g->si->tank.destroyed) {
+          g->si->tank.destroyed_count++;
+          if (g->si->tank.destroyed_count > 20) {
+            g->si->tank.destroyed = 0;
+            g->si->tank.destroyed_count = 0;
+            si_tank_set_position(g);
+          }
+          g->update = 1;
+        } else {
+          if (g->si->invaders.direction == 1) {
+            if (!si_invaders_can_move_right(g->si))
+              g->si->invaders.direction = -1;
+            else
+              g->update = 1;
+          } else {
+            if (!si_invaders_can_move_left(g->si))
+              g->si->invaders.direction = 1;
+            else
+              g->update = 1;
+          }
+        }
+        g->count_invaders = c_invaders;
+      }
+
+      if ((float)(c_shoot - g->count_shoot) / g->freq > shoot_period) {
+        if (g->si->tank.firing) {
+          if (si_tank_shoot_can_move_up(g->si))
+            g->update = 1;
+
+          if (si_invader_is_hit(g->si)) {
+            if (g->si->score_1 > g->si->score_highest)
+              g->si->score_highest = g->si->score_1;
+            g->update = 1;
+          }
+        }
+
+        if (!g->si->invaders.firing) {
+          si_invaders_get_column(g->si);
+          g->si->invaders.firing = 1;
+        }
+
+        if (g->si->invaders.firing) {
+          if (si_invaders_bomb_can_move_down(g->si))
+            g->update = 1;
+
+          if (si_tank_is_hit(g->si))
+            g->update = 1;
+        }
+
+        g->count_shoot = c_shoot;
+      }
+
+      if (si_matrix_count() == 0) {
+        matrix_reset();
+        inv_period *= 0.9f;
+        shoot_period *= 0.9f;
+        g->update = 1;
+      }
+    }
+
+    if (g->update)
+      game_update(g);
+  }
 }
-		  
-	  
-      
