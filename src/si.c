@@ -174,42 +174,75 @@ int si_tank_is_hit(Si *si)
 
 void si_invaders_get_column(Si *si)
 {
-  int col = (rand() % 11);     // Renvoie une colonne aléatoire entre 0 et 10
-                                  // On cherche l'ennemi vivant le plus bas dans la colonne
-  for (int ligne = 4; ligne >= 0; ligne--) {  // On part du bas de la matrice (ligne 4) vers le haut
-      if (matrice[ligne][col] != 0)
-	{                                  // On calcule les coordonnées de la bombe à partir de l'ennemi vivant :
-	  int largeur_ennemi = 12;         // Chaque ennemi est une matrice 12x8
-          si->invaders.bomb_x = si->invaders.x + (col * largeur_ennemi) + (largeur_ennemi / 2) - 2; // -2 pour centrer le sprite de bombe 
-          int hauteur_ennemi = 8;
-          si->invaders.bomb_y = si->invaders.y + (ligne * hauteur_ennemi) + hauteur_ennemi;
-            
-          // On indique qu'une bombe a été lancée
-          si->invaders.firing = 1;
-          return;
-        }
+  char *matrix = si_get_matrix();
+   
+  // On cherche une colonne avec au moins un ennemi vivant
+  int col_nnvid[11];
+  int count = 0;
+  
+  for(int j = 0; j < 11; j++)
+    {
+      // On vérifie si cette colonne a un ennemi en bas
+      for(int i = 4; i >= 0; i--)
+	{
+	  if(matrix[i * 11 + j] != 0)
+	    {
+	      col_nnvid[count++] = j;
+	      break; // On a trouvé un ennemi 
+	    }
+	}
     }
     
-    // si y a plus d'ennemis on lance pas de bombes
-    si->invaders.firing = 0;
+  if(count == 0)
+      return; // Aucun ennemi disponible
+    
+    // Choisir une colonne aléatoirement
+  int col = col_nnvid[rand() % count];
+    
+  // Trouver l'ennemi le plus bas dans cette colonne
+  int lin = -1;
+  for(int i = 4; i >= 0; i--)
+    {
+      if(matrix[i * 11 + col] != 0)
+	{
+	  lin = i;
+          break;
+	}
+    }
+    
+  if(lin == -1)
+    return; // Problème
+  
+  // Définir la position initiale de la bombe
+  si->invaders.bomb_x = si->invaders.x + col * 12 * si->pixel_size;
+  si->invaders.bomb_y = si->invaders.y + lin * 8 * si->pixel_size;
+  si->invaders.firing = 1;
 }
 
 // Renvoie 1 si la bombe peut aller vers le bas et modifie sa position, 0 sinon 
 int si_invaders_bomb_can_move_down(Si *si)
 {
-  int y = si->invaders.bomb_y - 8;// Pour avoir le plus bas pixel du sprite (voir si_font.c)
-  if(si->window_height - y <= 0)      // Si la bombe est en bas de l'écran 
-    return 0;
-  si->invaders.bomb_y -= 1;            // Sinon la bombe descends.
+  int y = si->invaders.bomb_y;
+  if(si->window_height <= y) //Si la bombe est en bas de l'écran
+    {
+      si->invaders.firing = 0;
+      return 0;
+    }
+  si->invaders.bomb_y += 3 * si->pixel_size;   // Sinon la bombe peut descendre et descends.
   return 1;
 }
 
 
 int si_invaders_can_move_left(Si *si)
 {
-  int x =si->invaders.x;
-  if(x == 0)     // si le coin haut-gauche de la matrice est tout à gauche de la fenetre
-    return 0;    // la matrice ne peut pas se déplacer à gauche
+  int x = si->invaders.x;
+  
+  if(x <= 0)
+    {
+      si->invaders.y += 8*si->pixel_size;  // Descendre d'une ligne
+      si->invaders.direction = 1;  // Changer de direction
+      return 0;
+    }
   si->invaders.x -= 1; //sinon on update la position
   return 1;
 }
@@ -218,72 +251,76 @@ int si_invaders_can_move_left(Si *si)
 
 int si_invaders_can_move_right(Si *si)
 {
-  int x =si->invaders.x;
-  if(x == si->window_width)
-    return 0; 
-  si->invaders.x += 1; 
+  int x = si->invaders.x;
+  int largeur_mat = 11 * 12 * si->pixel_size; // 11 colonnes et 12 pixels par ennemis
+  
+  if(x + largeur_mat >= si->window_width)
+    {
+      si->invaders.y += 8 * si->pixel_size;  // Descendre d'une ligne
+      si->invaders.direction = -1;  // Changer de direction
+      return 0;
+    }
+  si->invaders.x += 1; //sinon on update la position
   return 1;
 }
 
 int si_invader_is_hit(Si *si)
 {
-    int largeur_ennemi = 12;
-    int hauteur_ennemi = 8;
+  char *matrix = si_get_matrix();
     
-    if (!si->tank.firing)
-      {
-        return 0;
-      }
-    // Coordonnées du tir du tank  
-    int tir_x = si->tank.shoot_x;
-    int tir_y = si->tank.shoot_y;
-    
-    // On vérifie si le tir touche un ennemi
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 11; j++)
-	  {
-            // Si l'ennemi est encore vivant
-            if (matrice[i][j] != 0)
-	      {
-                // Calcul des coordonnées de l'ennemi
-                int ennemi_x = si->invaders.x + (j * largeur_ennemi);
-                int ennemi_y = si->invaders.y + (i * hauteur_ennemi);
+  if(!si->tank.firing)
+    {
+      return 0;
+    }
+  // Coordonnées du tir du tank  
+  int tir_x = si->tank.shoot_x;
+  int tir_y = si->tank.shoot_y;
+  
+  // On vérifie si le tir touche un ennemi
+  for(int i = 0; i < 5; i++)
+    {
+      for(int j = 0; j < 11; j++)
+	{
+          // Si l'ennemi est encore vivant
+          if (matrix[i*11+j] != 0)
+	    {
+              // Calcul des coordonnées de l'ennemi
+              int ennemi_x = si->invaders.x + (j * 12 * si->pixel_size);
+              int ennemi_y = si->invaders.y + (i * 8 * si->pixel_size);
+              //on regarde si les sprites du tir et l'ennemi se superposent(se touchent)
+              if(tir_x >= ennemi_x && tir_x < ennemi_x + 12 * si->pixel_size)
+		{
+                  if(tir_y >= ennemi_y && tir_y < ennemi_y + 8 * si->pixel_size)
+		    {
+                      
+                      // update du score
+                      Si_Type type = matrix[i*11+j];
+                      switch(type)
+			{
+                          case SI_TYPE_SQUID:
+                              si->score_1 += 30;
+                              break;
+                          case SI_TYPE_CRAB:
+                              si->score_1 += 20;
+                              break;
+                          case SI_TYPE_OCTOPUS:
+                              si->score_1 += 10;
+                              break;
+                        }
 
-		//on regarde si les sprites du tir et l'ennemi se superposent(se touchent)
-                if(tir_x >= ennemi_x && tir_x < ennemi_x + largeur_ennemi)
-		  {
-                    if(tir_y >= ennemi_y && tir_y < ennemi_y + hauteur_ennemi)
-		      {
-                        
-                        // update du score
-                        Si_Type type = matrice[i][j];
-                        switch (type)
-			  {
-                            case SI_TYPE_SQUID:
-                                si->score_1 += 30;
-                                break;
-                            case SI_TYPE_CRAB:
-                                si->score_1 += 20;
-                                break;
-                            case SI_TYPE_OCTOPUS:
-                                si->score_1 += 10;
-                                break;
-                          }
+		      // ennemi détruit
+                      matrix[i*11+j] = 0;
+                      
+                      // update du statut du tir
+                      si->tank.firing = 0;
 			
-			// ennemi détruit
-                        matrice[i][j] = 0;
-                        
-                        // update du statut du tir
-                        si->tank.firing = 0;
-			
-                        return 1;  // Un ennemi a été touché
+                      return 1;  // Un ennemi a été touché
                     }
                 }
             }
         }
     }
-    
-    return 0;  // Aucun ennemi touché
+  return 0;  // Aucun ennemi touché
 }
 
 

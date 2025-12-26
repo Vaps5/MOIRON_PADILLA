@@ -113,6 +113,7 @@ void si_tank_set_position(Game *g)
 
 /** invader **/
 
+
 void si_invader_display(Game *g, int type, int model, int x, int y)
 {
   int width;
@@ -135,6 +136,33 @@ void si_invader_shoot_display(Game *g, int x, int y)
     si_display_sprite(g, sprite, width, x, y);
 }
 
+void si_invaders_display(Game *g, int x, int y)
+{
+    char *matrix = si_get_matrix();
+    for(int i = 0; i < 5; i++)
+      {
+        for(int j = 0; j < 11; j++)
+	  {
+            // Ne pas afficher les ennemis détruits
+            if(matrix[i * 11 + j] == 0)
+	      {
+                continue; //skip (i,j) pour aller à (i,j+1). On utilise pas break sinon ça ferait : (i,j) -> (i+1, 0)
+	      }
+	    
+            int enemy_x = x + j * 12 * g->pixel_size;
+            int enemy_y = y + i * 8 * g->pixel_size;
+            
+            // On récupère le type de l'ennemi
+            Si_Type type = matrix[i * 11 + j];
+            
+            // Animations
+            int model = (SDL_GetTicks()/500)%2;  // change toutes les 0,5s
+            
+            // Affichage
+            si_invader_display(g, type, model, enemy_x, enemy_y);
+        }
+    }
+}
 
 
 /** ufo **/
@@ -148,8 +176,8 @@ void si_ufo_display(Game *g, int x, int y) {
 
 
 
-
-/*Just for test without si_get_matrix*/
+/*
+*Just for test without si_get_matrix*
 
 #define SI_INVADERS_ROWS 5
 #define SI_INVADERS_COLS 11
@@ -158,11 +186,11 @@ void si_invaders_display(Game *g, int x, int y)
 {
     int pixel = g->pixel_size;
 
-    /* Size invader in real pixels */
+    * Size invader in real pixels *
     int invader_w_px = 12 * pixel;  
-    int invader_h_px = 8  * pixel;  /* 8 rows */
+    int invader_h_px = 8  * pixel;  * 8 rows *
 
-    /* Space between invaders */
+    * Space between invaders *
     int spacing_x = invader_w_px + 2 * pixel;
     int spacing_y = invader_h_px + 2 * pixel;
 
@@ -187,4 +215,4 @@ void si_invaders_display(Game *g, int x, int y)
     }
 }
 
-
+*/
