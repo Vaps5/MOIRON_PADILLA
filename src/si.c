@@ -177,6 +177,7 @@ void si_invaders_get_column(Si *si)
   char *matrix = si_get_matrix();
    
   // On cherche une colonne avec au moins un ennemi vivant
+  
   int col_nnvid[11];
   int count = 0;
   
@@ -214,8 +215,8 @@ void si_invaders_get_column(Si *si)
     return; // Problème
   
   // Définir la position initiale de la bombe
-  si->invaders.bomb_x = si->invaders.x + col * 12 * si->pixel_size;
-  si->invaders.bomb_y = si->invaders.y + lin * 8 * si->pixel_size;
+  si->invaders.bomb_x = si->invaders.x + col * 12 * si->pixel_size + 4 * si->pixel_size;
+  si->invaders.bomb_y = si->invaders.y + lin * 8 * si->pixel_size + 4 * si->pixel_size;  // Les 4 * pixelsize sont là pour centrer le sprite 
   si->invaders.firing = 1;
 }
 
@@ -235,7 +236,32 @@ int si_invaders_bomb_can_move_down(Si *si)
 
 int si_invaders_can_move_left(Si *si)
 {
-  int x = si->invaders.x;
+  char *m = si_get_matrix();
+  // On détermine la premiere colonne non-vide à gauche
+  int col = 0;
+
+  for(int j = 0; j < 11; j++)
+    {
+      int col_nn_vide = 0;
+      for(int i = 0; i < 5; i++)
+	{
+	  if(m[i * 11 + j] != 0)
+	    {
+	      col_nn_vide = 1;
+	      break;   // on sort de la boucle for pour i
+	    }
+	}
+      
+      // col_nn_vide vaut 1 si la colonne j est non vide, 0 sinon
+      
+      if(col_nn_vide)
+	{
+	  col = j; // C'est la premiere colonne non-vide
+	  break;       // on sort de la boucle for pour j
+	}
+    }
+  
+  int x = si->invaders.x + col * 12 * si->pixel_size;; // Coordonée x de l'ennemi le plus à gauche (un ennemi = 12 pixels)
   
   if(x <= 0)
     {
@@ -251,10 +277,35 @@ int si_invaders_can_move_left(Si *si)
 
 int si_invaders_can_move_right(Si *si)
 {
+  char *m = si_get_matrix();
+  // On détermine la premiere colonne non-vide en partant de la droite
+  int col = 0;
+
+  for(int j = 10; j >= 0; j--)
+    {
+      int col_nn_vide = 0;
+      for(int i = 0; i < 5; i++)
+	{
+	  if(m[i * 11 + j] != 0)
+	    {
+	      col_nn_vide = 1;
+	      break;   // on sort de la boucle for pour i
+	    }
+	}
+      
+      // col_nn_vide vaut 1 si la colonne j est non vide, 0 sinon
+      
+      if(col_nn_vide)
+	{
+	  col = 10 - j; 
+	  break;       // on sort de la boucle for pour j
+	}
+    }
+  
   int x = si->invaders.x;
   int largeur_mat = 11 * 12 * si->pixel_size; // 11 colonnes et 12 pixels par ennemis
   
-  if(x + largeur_mat >= si->window_width)
+  if(x + largeur_mat - col * 12 * si->pixel_size >= si->window_width)
     {
       si->invaders.y += 8 * si->pixel_size;  // Descendre d'une ligne
       si->invaders.direction = -1;  // Changer de direction
@@ -263,6 +314,7 @@ int si_invaders_can_move_right(Si *si)
   si->invaders.x += 1; //sinon on update la position
   return 1;
 }
+
 
 int si_invader_is_hit(Si *si)
 {

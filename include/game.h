@@ -21,15 +21,24 @@ typedef struct
   Uint64 count_invaders;
   Uint64 count_shoot;
   
+  Uint64 ufo_last_move;
+  Uint64 ufo_spawn_time;
+  
   char update;
 
-  /*
-  // F4
 
   int num_wave;       // numéro de la vague actuelle
   double enemy_speed; // vitesse des invaders
   double shot_speed;  // vitesse des tirs ennemis
-  */
+
+  // UFO
+  
+  int ufo_active;        // 1 = UFO présent, 0 = pas d'UFO
+  int ufo_x;             
+  int ufo_y;             
+  int ufo_direction;     // cf. Invaders
+  float ufo_speed;       // Vitesse de déplacement
+  int ufo_points;        // Points si détruit
   
 } Game;
 

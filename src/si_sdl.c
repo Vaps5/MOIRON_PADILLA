@@ -22,10 +22,10 @@ void si_display_sprite(Game *g, char *sprite, int w, int x, int y) {
 	      /* Pixel On */
           /*SDL_Rect draws a square */
                 SDL_Rect rect = {
-                    x + col * pixel_size,
-                    y + row * pixel_size,
-                    pixel_size,
-                    pixel_size // size of square pixel_size*pixel_size
+		  x + col * pixel_size,
+		  y + row * pixel_size,
+                  pixel_size,
+                  pixel_size // size of square pixel_size*pixel_size
                 };
                 /* Draw pixel white*/  
                 SDL_SetRenderDrawColor(g->ren, 255, 255, 255, 255);
@@ -139,6 +139,7 @@ void si_invader_shoot_display(Game *g, int x, int y)
 void si_invaders_display(Game *g, int x, int y)
 {
     char *matrix = si_get_matrix();
+    
     for(int i = 0; i < 5; i++)
       {
         for(int j = 0; j < 11; j++)
@@ -148,7 +149,7 @@ void si_invaders_display(Game *g, int x, int y)
 	      {
                 continue; //skip (i,j) pour aller à (i,j+1). On utilise pas break sinon ça ferait : (i,j) -> (i+1, 0)
 	      }
-	    
+
             int enemy_x = x + j * 12 * g->pixel_size;
             int enemy_y = y + i * 8 * g->pixel_size;
             

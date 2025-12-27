@@ -1,7 +1,7 @@
 /*
 To compile
 
-gcc -g -O2 -Wall -Wextra -o si src/*.c $(pkg-config --cflags --libs sdl2)
+gcc -g -O2 -Wall -Wextra -o si src/ *.c $(pkg-config --cflags --libs sdl2)
 ./si
 */
 
@@ -64,26 +64,11 @@ static void matrix_reset(void)
 }
 
 
-/* F4
-  
-  // Affichage du numéro de vague
-  
-  char wave[15];
-  snprintf(wave, sizeof(wave), "WAVE: %d", g->current_wave);
-  si_text_display(g, wave, 1, 10); // à changer si besoin (voir apres les tests)
-  
-  // Affichage du meilleur score
-  
-  char high_score[50];
-  snprintf(high_score, sizeof(high_score), "HIGH: %d", g->si->score_highest);
-  si_text_display(g, high_score, 1, 18); // à changer si besoin (voir apres les tests)
-  */
-
 static void game_update(Game *g)
 {
   SDL_SetRenderDrawColor(g->ren, 0x2b, 0x2a, 0x33, 0xff);
   SDL_RenderClear(g->ren);
-
+  
   if (!g->play_game) {
     menu(g);
   } else if (g->si->life_1 == 0) {
@@ -91,6 +76,10 @@ static void game_update(Game *g)
   } else {
     si_text_display(g, "SCORE<1> HI-SCORE SCORE<2>", 0, 0);
 
+    char wave[30];
+    snprintf(wave, sizeof(wave), "CURRENT WAVE -> %d", g->num_wave);
+    si_text_display(g, wave, 3, 0);
+    
     char s1[16], sh[16], s2[16];
     snprintf(s1, sizeof(s1), "%04d", g->si->score_1);
     snprintf(sh, sizeof(sh), "%04d", g->si->score_highest);
@@ -104,6 +93,10 @@ static void game_update(Game *g)
 
     if (g->si->invaders.firing) {
       si_invader_shoot_display(g, g->si->invaders.bomb_x, g->si->invaders.bomb_y);
+    }
+
+    if (g->ufo_active) {
+      si_ufo_display(g, g->ufo_x, g->ufo_y);
     }
 
     int ty = tank_y_px(g);
@@ -138,7 +131,7 @@ Game *game_new(void)
   g->ren = NULL;
   g->si  = NULL;
 
-  g->pixel_size = 2;
+  g->pixel_size = 3;
 
   g->window_width  = NB_COLS  * CHAR_W_UNITS * g->pixel_size;
   g->window_height = NB_LINES * CHAR_H_UNITS * g->pixel_size;
@@ -183,7 +176,7 @@ Game *game_new(void)
   si_tank_set_position(g);
 
   g->si->invaders.x = 0;
-  g->si->invaders.y = 2 * CHAR_H_UNITS * g->pixel_size;
+  g->si->invaders.y = 6 * CHAR_H_UNITS * g->pixel_size;
   g->si->invaders.direction = 1;
   g->si->invaders.firing = 0;
 
@@ -192,6 +185,16 @@ Game *game_new(void)
   g->count_shoot    = SDL_GetPerformanceCounter();
 
   srand((unsigned)time(NULL));
+
+  g->num_wave = 1;                // Numéro de la vague
+  g->enemy_speed = 0.2f;          // Fréquence tirs ennemis
+  g->shot_speed = 0.01f;          // Vitesse tirs ennemis
+
+  // Initialisation de l'ufo
+  
+  g->ufo_active = 0;
+  g->ufo_y = 8 * g->pixel_size * 5; // Ligne 5
+  g->ufo_speed = 1.6f;
 
   return g;
 }
@@ -212,14 +215,23 @@ void game_del(Game *g)
 void game_run(Game *g)
 {
   int running = 1;
-  float inv_period = 0.1f;
-  float shoot_period = 0.005f;
+  float tank_shoot_period = 0.007f;  // Vitesse tirs tank
 
+  // UFO
+    
+  // Variables pour le timing de l'ufo
+  
+  Uint64 last_ufo_check = SDL_GetPerformanceCounter();
+  float ufo_check_interval= 7.0f; 
+  
   while (running) {
     SDL_Event events;
     Uint64 c_shoot;
     Uint64 c_invaders;
+    Uint64 current_time = SDL_GetPerformanceCounter();
 
+    // Partie fonctions SDL
+    
     while (SDL_PollEvent(&events)) {
       switch (events.type) {
 
@@ -235,8 +247,12 @@ void game_run(Game *g)
           break;
 
         case SDLK_SPACE:
-          if (g->play_game) {
-            tank_try_fire(g);
+	  if(g->si->life_1 == 0)
+	    {
+	      running = 0; // Stoppe nos tirs pendant le game over screen.
+	    }
+          else if (g->play_game) {
+            if (!g->si->tank.destroyed) tank_try_fire(g);
             g->update = 1;
           } else {
             g->play_game = 1;
@@ -251,7 +267,7 @@ void game_run(Game *g)
         break;
 
       case SDL_MOUSEMOTION:
-        if (g->play_game) {
+        if (!g->si->tank.destroyed && g->play_game && g->si->life_1 != 0) {
           g->si->tank.x = clamp_tank_x(g, events.motion.x);
           g->update = 1;
         }
@@ -262,16 +278,79 @@ void game_run(Game *g)
       }
     }
 
-    if (g->play_game == 0) {
+    // Partie jeu
+
+    if (g->play_game == 0 || g->si->life_1 == 0) {
       g->update = 1;
     } else {
       c_invaders = SDL_GetPerformanceCounter();
       c_shoot    = SDL_GetPerformanceCounter();
 
-      if ((float)(c_invaders - g->count_invaders) / g->freq > inv_period) {
+      // UFO
+
+      if (!g->ufo_active && (float)(current_time - last_ufo_check) / g->freq > ufo_check_interval) {
+	if ((rand() % 100) < 15) {  // 15% de chance de spawn l'ufo toute les 7s
+	  g->ufo_active = 1;
+	  if(rand() % 2 == 0)
+	    g->ufo_direction = 1;
+	  else
+	    g->ufo_direction = -1;
+	  if (g->ufo_direction == 1) {
+	    g->ufo_x = -32;         // Légèrement hors écran à gauche
+	  } else {
+	    g->ufo_x = g->window_width + 32;
+	  }
+
+	  // Points aléatoires
+	  int point_values[] = {50, 100, 150, 200, 300};
+	  g->ufo_points = point_values[rand() % 5];
+	  g->ufo_spawn_time = current_time;
+	  g->update = 1;
+	}
+	last_ufo_check = current_time;
+      }
+      if (g->ufo_active) {
+	// Vérifie si on doit le déplacer
+	if ((float)(current_time - g->ufo_last_move) / g->freq > 0.05f) {
+	  g->ufo_x += g->ufo_direction * g->ufo_speed * g->pixel_size;
+	  g->ufo_last_move = current_time;
+	  g->update = 1;
+
+	  // Vérifie si l'UFO est sorti de l'écran
+	  int ufo_width = 16 * g->pixel_size;
+	  if ((g->ufo_direction == 1 && g->ufo_x > g->window_width) || (g->ufo_direction == -1 && g->ufo_x < -ufo_width)) {
+	    g->ufo_active = 0;
+	  }
+	}
+
+	if (g->si->tank.firing) {
+	  // Dimensions de l'UFO
+	  int ufo_width = 16 * g->pixel_size;
+	  int ufo_height = 8 * g->pixel_size;
+	  
+	  // Position du tir
+
+	  int shoot_x = g->si->tank.shoot_x;
+	  int shoot_y = g->si->tank.shoot_y;
+
+	  // Vérifier la collision
+
+	  if (shoot_x >= g->ufo_x && shoot_x < g->ufo_x + ufo_width && shoot_y >= g->ufo_y && shoot_y < g->ufo_y + ufo_height) {
+	    g->si->score_1 += g->ufo_points;
+	    g->si->score_highest += g->ufo_points;
+	    g->si->tank.firing = 0;
+	    g->ufo_active = 0;
+	    g->update = 1;
+	  }
+	}
+      }
+
+      // Déplacement des invaders
+
+      if ((float)(c_invaders - g->count_invaders) / g->freq > g->enemy_speed) {
         if (g->si->tank.destroyed) {
           g->si->tank.destroyed_count++;
-          if (g->si->tank.destroyed_count > 20) {
+          if (g->si->tank.destroyed_count > 15) {
             g->si->tank.destroyed = 0;
             g->si->tank.destroyed_count = 0;
             si_tank_set_position(g);
@@ -293,7 +372,9 @@ void game_run(Game *g)
         g->count_invaders = c_invaders;
       }
 
-      if ((float)(c_shoot - g->count_shoot) / g->freq > shoot_period) {
+      // Tir du tank
+      
+      if ((float)(c_shoot - g->count_shoot) / g->freq > tank_shoot_period) {
         if (g->si->tank.firing) {
           if (si_tank_shoot_can_move_up(g->si))
             g->update = 1;
@@ -304,8 +385,12 @@ void game_run(Game *g)
             g->update = 1;
           }
         }
+      }
 
-        if (!g->si->invaders.firing) {
+      // Tir invaders
+      
+      if ((float)(c_shoot - g->count_shoot) / g->freq > g->shot_speed) {
+        if (!g->si->invaders.firing && !g->si->tank.destroyed) {
           si_invaders_get_column(g->si);
           g->si->invaders.firing = 1;
         }
@@ -321,10 +406,18 @@ void game_run(Game *g)
         g->count_shoot = c_shoot;
       }
 
+      // Nouvelle vague
+      
       if (si_matrix_count() == 0) {
         matrix_reset();
-        inv_period *= 0.9f;
-        shoot_period *= 0.9f;
+	g->si->invaders.x = 0;
+	g->si->invaders.y = 6 * CHAR_H_UNITS * g->pixel_size;
+	g->si->invaders.direction = 1;
+	g->si->invaders.firing = 0;
+	
+	g->num_wave++;
+        g->shot_speed *= 0.8f;
+        g->enemy_speed *= 0.3f;
         g->update = 1;
       }
     }
