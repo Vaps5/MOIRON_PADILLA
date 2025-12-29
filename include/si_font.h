@@ -5,10 +5,6 @@
 #include "si.h"
 
 
-/* UNIQUEMENT POUR LES TESTS, A MODIFIER QUAND ON CHANGE LE MAIN */
-
-void pixel_update();
-
 
 /* renvoie le sprite du caractère 'c', ainsi que sa largeur dans width 
 Returns pointer to character ASCII with width
