@@ -131,7 +131,7 @@ Game *game_new(void)
   g->ren = NULL;
   g->si  = NULL;
 
-  g->pixel_size = 3;
+  g->pixel_size = 2;
 
   g->window_width  = NB_COLS  * CHAR_W_UNITS * g->pixel_size;
   g->window_height = NB_LINES * CHAR_H_UNITS * g->pixel_size;
