@@ -2,7 +2,7 @@
 
 ## Space Invaders — Projet C 
 
-Ce projet consiste en le développement du jeu Space Invaders en langage C. Les principaux éléments développés étaient les personnages, le char, les envahisseurs et l'OVNI. Différentes fonctions et structures ont été utilisées pour contrôler les mouvements des éléments, détecter les collisions et gérer les modifications visuelles pendant la partie.
+Ce projet consiste en le développement du jeu Space Invaders en langage C. Les principaux éléments développés étaient les personnages, le char, les envahisseurs et l'UFO. Différentes fonctions et structures ont été utilisées pour contrôler les mouvements des éléments, détecter les collisions et gérer les modifications visuelles pendant la partie.
 
 La bibliothèque SDL a été utilisée pour la partie graphique du projet, permettant le rendu des graphismes, la modification de la structure des fenêtres et l'affichage final des différents éléments du jeu.
 
